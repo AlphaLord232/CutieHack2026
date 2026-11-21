@@ -1,18 +1,55 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 
 function App() {
 
-  const [value, setValue] = useState('');
+  const [word, setWord] = useState('');
+  const [numWords, setNumWords] = useState(0);
+  const [lengths, setLengths] = useState(new Array(50).fill(0));
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(e.target.value);
+    setWord(e.target.value);
+  }
+
+  const initializeData = async () => {
+    const textResponse = await fetch('src/words.txt');
+    const newData = await textResponse.text().then(text => text.split('\n'));
+
+    setNumWords(newData.length);
+
+    const newLengths = new Array(50).fill(0);
+    for (let i = 0; i < newData.length; i++) {
+      newLengths[newData[i].length]++;
+    }
+    setLengths(newLengths);
+    for (let i = 0; i < newLengths.length; i++) {
+      console.log(`Length ${i}: ${newLengths[i]}`);
+    }
+  }
+
+  const getStats = async () => {
+    const response = await fetch(`https://freedictionaryapi.com/api/v1/entries/en/${word}`);
+    const data = await response.json();
+    console.log(data);
+  }
+
+  useEffect(() => {
+    initializeData();
+  }, []);
+
+  const getPoints = (frequency: number) => {
+    return ((numWords / frequency) * 100).toLocaleString('en-US', { maximumFractionDigits: 0 });
   }
 
   return (<>
     <div className='input-container'>
       <div className='input-label'>Input a word... </div>
-      <input className='word-input' value={value} onChange={handleValueChange}/>
+      <input className='word-input' value={word} onChange={handleValueChange}/>
+      <button className='button-primary' onClick={getStats}>Go!</button>
+    </div>
+    <div className='results-container'>
+      <div>{word.length}-letter word</div>
+      <div>+{getPoints(lengths[word.length])} pts</div>
     </div>
   </>)
 

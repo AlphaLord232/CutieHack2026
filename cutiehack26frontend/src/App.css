@@ -2,7 +2,13 @@ body {
   padding: 25px 50px;
   max-width: 800px;
   margin: auto;
+  background-color: #2c2531;
+  color: white;
 }
+
+* {font-family: system-ui}
+
+button {cursor: pointer}
 
 :focus {outline: none}
 
@@ -20,6 +26,18 @@ body {
   flex-grow: 1;
   padding: 10px;
   font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid #ffffff40;
+  background-color: transparent;
+  color: white;
+  border-radius: 6px;
+}
+
+.button-primary {
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #8c38cd;
+  color: white;
+  border: none;
+  border-radius: 6px;
 }

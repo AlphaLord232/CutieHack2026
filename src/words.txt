@@ -326877,7 +326877,7 @@ RAR
 rara
 RARDE
 Rarden
-RARE
+rare
 rarebit
 rarebits
 rare-bred

@@ -24,24 +24,34 @@ class Characteristics {
     int countAlphabeticalOrder;
     int countReverseAlphabeticalOrder;
     int countStartEndSameLetter;
+    int countScrabbleScore20;
+    int countScrabbleScore30;
+    int countScrabbleScore40;
+    int countDoubleConsecutiveLetters;
+    int countTripleConsecutiveLetters;
+    int countContainsRarityWord;
+    int countIsRarityWord;
     
   public:
     void calculateCounts();
+    void printCounts();
     void printScore(string word);
     void addPoints(string rule, int frequency);
     string getRarity(); 
     
     bool isPalindrome(string word);
-    bool noRepeatedLetters(string word); //done
-    int consecutiveLetters(string word); //done
-    bool containsNoVowels(string word); //done
-    bool containsNoConsonants(string word); //done
-    bool alternatingVowelsConsonants(string word); //done
-    bool alphabeticalOrder(string word); //done
-    bool reverseAlphabeticalOrder(string word); //done
-    bool startEndSameLetter(string word); //done
-    int rareLetters(string word); //done returns number of Q,X,Z
+    bool noRepeatedLetters(string word);
+    bool containsNoVowels(string word);
+    bool containsNoConsonants(string word);
+    bool alternatingVowelsConsonants(string word);
+    bool alphabeticalOrder(string word);
+    bool reverseAlphabeticalOrder(string word);
+    bool startEndSameLetter(string word);
+    bool containsRarityWord(string word);
+    bool isRarityWord(string word);
+    int rareLetters(string word); // Returns Q, X, Z
     int calculateScrabbleScore(string word);
+    int consecutiveLetters(string word);
 
     //helper functions
     bool contains(string word, char letter);

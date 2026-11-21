@@ -37,7 +37,6 @@ class Characteristics {
     void printCounts();
     void printScore(string word);
     void addPoints(string rule, int frequency);
-    string getRarity(); 
     
     bool isPalindrome(string word);
     bool noRepeatedLetters(string word);

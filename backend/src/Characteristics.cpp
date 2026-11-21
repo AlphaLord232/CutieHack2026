@@ -50,28 +50,29 @@ void Characteristics::calculateCounts() {
 void Characteristics::printCounts() {
 
     cout << endl << "--- Word Characteristics Summary ---" << endl;
-    // cout << "Total Words: " << numWords << endl;
-    // cout << "Palindromes: " << countPalindromes << endl;
-    // cout << "No Repeated Letters: " << countNoRepeatedLetters << endl;
-    // cout << "No Vowels: " << countNoVowels << endl;
-    // cout << "No Consonants: " << countNoConsonants << endl;
-    // cout << "Alternating Vowels and Consonants: " << countAlternatingVowelsConsonants << endl;
-    // cout << "Alphabetical Order: " << countAlphabeticalOrder << endl;
-    // cout << "Reverse Alphabetical Order: " << countReverseAlphabeticalOrder << endl;
-    // cout << "Start and End with Same Letter: " << countStartEndSameLetter << endl;
-    // cout << "Scrabble Score >= 20: " << countScrabbleScore20 << endl;
-    // cout << "Scrabble Score >= 30: " << countScrabbleScore30 << endl;
-    // cout << "Scrabble Score >= 40: " << countScrabbleScore40 << endl;
-    // cout << "Double Consecutive Letters: " << countDoubleConsecutiveLetters << endl;
-    // cout << "Triple Consecutive Letters: " << countTripleConsecutiveLetters << endl;
+    cout << "Total Words: " << numWords << endl;
+    cout << "Palindromes: " << countPalindromes << endl;
+    cout << "No Repeated Letters: " << countNoRepeatedLetters << endl;
+    cout << "No Vowels: " << countNoVowels << endl;
+    cout << "No Consonants: " << countNoConsonants << endl;
+    cout << "Alternating Vowels and Consonants: " << countAlternatingVowelsConsonants << endl;
+    cout << "Alphabetical Order: " << countAlphabeticalOrder << endl;
+    cout << "Reverse Alphabetical Order: " << countReverseAlphabeticalOrder << endl;
+    cout << "Start and End with Same Letter: " << countStartEndSameLetter << endl;
+    cout << "Scrabble Score >= 20: " << countScrabbleScore20 << endl;
+    cout << "Scrabble Score >= 30: " << countScrabbleScore30 << endl;
+    cout << "Scrabble Score >= 40: " << countScrabbleScore40 << endl;
+    cout << "Double Consecutive Letters: " << countDoubleConsecutiveLetters << endl;
+    cout << "Triple Consecutive Letters: " << countTripleConsecutiveLetters << endl;
     cout << "Contains Rarity Word: " << countContainsRarityWord << endl;
     cout << "Is Rarity Word: " << countIsRarityWord << endl;
 }
 
 void Characteristics::addPoints(string rule, int frequency) {
-    int increment = (double)numWords / frequency * 100;
     double odds = (double)frequency / numWords;
+    int increment = 100 / odds;
     cout << "   " << rule << ": +" << increment;
+    score += increment;
     
     if (odds > 0.1) {
         cout << " (Common)";
@@ -87,12 +88,9 @@ void Characteristics::addPoints(string rule, int frequency) {
         cout << " (Mythical)";
     }
     cout << endl;
-
-    score += (double)numWords / frequency * 100;
 }
 
 void Characteristics::printScore(string word) {
-
     score = 0;
 
     cout << endl << "Word: " << word << endl;

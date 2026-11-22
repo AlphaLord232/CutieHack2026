@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 
 interface WordCounts {
@@ -31,6 +31,8 @@ interface MatchedRule {
   rarity: string
 }
 
+const STARTING_CASH = 10000
+const BET_PER_ROLL = 2000
 const VOWELS = new Set(['a', 'e', 'i', 'o', 'u'])
 const RARITY_WORDS = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical']
 
@@ -133,26 +135,93 @@ function getSuitBadge(rarity: string) {
   }
 }
 
+function evaluateWordPoints(targetWord: string, stats: StatsData | null) {
+  const cleaned = targetWord.trim().toLowerCase()
+  if (!cleaned || !stats || stats.totalWords === 0) {
+    return { totalPoints: 0, rules: [] as MatchedRule[] }
+  }
+
+  const total = stats.totalWords
+  const c = stats.counts
+  const rules: MatchedRule[] = []
+
+  const addRule = (label: string, freq: number) => {
+    const safeFreq = Math.max(1, freq)
+    const odds = safeFreq / total
+    const points = Math.round(100 / odds)
+    rules.push({
+      label,
+      points,
+      rarity: getRarityLabel(odds),
+    })
+  }
+
+  if (isPalindrome(cleaned)) addRule('Palindrome', c.palindromes)
+  if (noRepeatedLetters(cleaned)) addRule('No Repeated Letters', c.noRepeatedLetters)
+  if (containsNoVowels(cleaned)) addRule('Contains No Vowels', c.noVowels)
+  if (containsNoConsonants(cleaned)) addRule('Contains No Consonants', c.noConsonants)
+  if (alternatingVowelsConsonants(cleaned)) {
+    addRule('Alternating Vowels and Consonants', c.alternatingVowelsConsonants)
+  }
+  if (alphabeticalOrder(cleaned)) addRule('Alphabetical Order', c.alphabeticalOrder)
+  if (reverseAlphabeticalOrder(cleaned)) {
+    addRule('Reverse Alphabetical Order', c.reverseAlphabeticalOrder)
+  }
+  if (startEndSameLetter(cleaned)) {
+    addRule('Start and End with Same Letter', c.startEndSameLetter)
+  }
+
+  const scrabble = scrabbleScore(cleaned)
+  if (scrabble >= 20) addRule('Scrabble Score >= 20', c.scrabbleScore20)
+  if (scrabble >= 30) addRule('Scrabble Score >= 30', c.scrabbleScore30)
+  if (scrabble >= 40) addRule('Scrabble Score >= 40', c.scrabbleScore40)
+
+  const consec = consecutiveLetters(cleaned)
+  if (consec >= 2) addRule('Double Consecutive Letters', c.doubleConsecutiveLetters)
+  if (consec >= 3) addRule('Triple Consecutive Letters', c.tripleConsecutiveLetters)
+
+  if (RARITY_WORDS.some((rw) => cleaned.includes(rw))) {
+    addRule('Contains Rarity Word', c.containsRarityWord)
+  }
+  if (RARITY_WORDS.includes(cleaned)) {
+    addRule('Is Rarity Word', c.isRarityWord)
+  }
+
+  const lenFreq =
+    cleaned.length < c.countLengths.length ? c.countLengths[cleaned.length] : 0
+  addRule(`Length of ${cleaned.length}`, lenFreq)
+
+  const totalPoints = rules.reduce((acc, r) => acc + r.points, 0)
+  return { totalPoints, rules }
+}
+
 function App() {
   const [word, setWord] = useState('')
+  const [displayWord, setDisplayWord] = useState('')
+  const [isSpinning, setIsSpinning] = useState(false)
   const [words, setWords] = useState<string[]>([])
   const [stats, setStats] = useState<StatsData | null>(null)
   const [dictInfo, setDictInfo] = useState<string>('')
   const [statusMsg, setStatusMsg] = useState<string>('Loading word dataset...')
 
+  const [cash, setCash] = useState<number>(STARTING_CASH)
+  const [lastPayout, setLastPayout] = useState<number | null>(null)
+  const settledRollRef = useRef(false)
+
   useEffect(() => {
     const initializeData = async () => {
       try {
+        const base = import.meta.env.BASE_URL
         const [statsRes, wordsRes] = await Promise.all([
-          fetch('/stats.json'),
-          fetch('/words.txt'),
+          fetch(`${base}stats.json`),
+          fetch(`${base}words.txt`),
         ])
 
         if (!statsRes.ok) {
-          throw new Error('Could not load /stats.json. Run the C++ backend first.')
+          throw new Error('Could not load stats.json. Run the C++ backend first.')
         }
         if (!wordsRes.ok) {
-          throw new Error('Could not load /words.txt into frontend/public/words.txt.')
+          throw new Error('Could not load words.txt from frontend/public/words.txt.')
         }
 
         const statsJson: StatsData = await statsRes.json()
@@ -173,14 +242,48 @@ function App() {
     initializeData()
   }, [])
 
-  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setWord(e.target.value)
-  }
+  useEffect(() => {
+    if (!isSpinning || words.length === 0) return
+
+    settledRollRef.current = false
+    let ticks = 0
+    const totalTicks = 14
+    const interval = window.setInterval(() => {
+      ticks++
+      const candidate = words[Math.floor(Math.random() * words.length)]
+      setDisplayWord(candidate)
+
+      if (ticks >= totalTicks && !settledRollRef.current) {
+        settledRollRef.current = true
+        window.clearInterval(interval)
+        const finalWord = words[Math.floor(Math.random() * words.length)]
+        const { totalPoints } = evaluateWordPoints(finalWord, stats)
+
+        setDisplayWord(finalWord)
+        setWord(finalWord)
+        setLastPayout(totalPoints)
+        setCash((prevCash) => prevCash + totalPoints)
+        setIsSpinning(false)
+      }
+    }, 55)
+
+    return () => window.clearInterval(interval)
+  }, [isSpinning, words, stats])
 
   const selectRandomWord = () => {
-    if (words.length === 0) return
-    const randomIndex = Math.floor(Math.random() * words.length)
-    setWord(words[randomIndex])
+    if (words.length === 0 || isSpinning || cash < BET_PER_ROLL) return
+    setDictInfo('')
+    setLastPayout(null)
+    setCash((prev) => prev - BET_PER_ROLL)
+    setIsSpinning(true)
+  }
+
+  const resetBankroll = () => {
+    if (isSpinning) return
+    setCash(STARTING_CASH)
+    setLastPayout(null)
+    setWord('')
+    setDisplayWord('')
     setDictInfo('')
   }
 
@@ -204,103 +307,84 @@ function App() {
     }
   }
 
-  const evaluation = useMemo(() => {
-    const cleaned = word.trim().toLowerCase()
-    if (!cleaned || !stats || stats.totalWords === 0) {
-      return { totalPoints: 0, rules: [] as MatchedRule[] }
-    }
-
-    const total = stats.totalWords
-    const c = stats.counts
-    const rules: MatchedRule[] = []
-
-    const addRule = (label: string, freq: number) => {
-      const safeFreq = Math.max(1, freq)
-      const odds = safeFreq / total
-      const points = Math.round(100 / odds)
-      rules.push({
-        label,
-        points,
-        rarity: getRarityLabel(odds),
-      })
-    }
-
-    if (isPalindrome(cleaned)) addRule('Palindrome', c.palindromes)
-    if (noRepeatedLetters(cleaned)) addRule('No Repeated Letters', c.noRepeatedLetters)
-    if (containsNoVowels(cleaned)) addRule('Contains No Vowels', c.noVowels)
-    if (containsNoConsonants(cleaned)) addRule('Contains No Consonants', c.noConsonants)
-    if (alternatingVowelsConsonants(cleaned)) {
-      addRule('Alternating Vowels and Consonants', c.alternatingVowelsConsonants)
-    }
-    if (alphabeticalOrder(cleaned)) addRule('Alphabetical Order', c.alphabeticalOrder)
-    if (reverseAlphabeticalOrder(cleaned)) {
-      addRule('Reverse Alphabetical Order', c.reverseAlphabeticalOrder)
-    }
-    if (startEndSameLetter(cleaned)) {
-      addRule('Start and End with Same Letter', c.startEndSameLetter)
-    }
-
-    const scrabble = scrabbleScore(cleaned)
-    if (scrabble >= 20) addRule('Scrabble Score >= 20', c.scrabbleScore20)
-    if (scrabble >= 30) addRule('Scrabble Score >= 30', c.scrabbleScore30)
-    if (scrabble >= 40) addRule('Scrabble Score >= 40', c.scrabbleScore40)
-
-    const consec = consecutiveLetters(cleaned)
-    if (consec >= 2) addRule('Double Consecutive Letters', c.doubleConsecutiveLetters)
-    if (consec >= 3) addRule('Triple Consecutive Letters', c.tripleConsecutiveLetters)
-
-    if (RARITY_WORDS.some((rw) => cleaned.includes(rw))) {
-      addRule('Contains Rarity Word', c.containsRarityWord)
-    }
-    if (RARITY_WORDS.includes(cleaned)) {
-      addRule('Is Rarity Word', c.isRarityWord)
-    }
-
-    const lenFreq =
-      cleaned.length < c.countLengths.length ? c.countLengths[cleaned.length] : 0
-    addRule(`Length of ${cleaned.length}`, lenFreq)
-
-    const totalPoints = rules.reduce((acc, r) => acc + r.points, 0)
-    return { totalPoints, rules }
-  }, [word, stats])
+  const evaluation = useMemo(() => evaluateWordPoints(word, stats), [word, stats])
+  const netRollResult = lastPayout !== null ? lastPayout - BET_PER_ROLL : null
 
   return (
     <main className="wonderland-shell">
       <header className="wonderland-banner">
-        <span className="suit-ornament suit-red" aria-hidden="true">♥</span>
-        <span className="banner-title">Wonderland Lexicon ({statusMsg})</span>
-        <span className="suit-ornament suit-dark" aria-hidden="true">♠</span>
+        <span className="suit-red" aria-hidden="true">♥</span>
+        <span>Wonderland Lexicon ({statusMsg})</span>
+        <span className="suit-dark" aria-hidden="true">♠</span>
       </header>
 
       <section className="storybook-card">
         <div className="card-inner">
-          <div className="random-controls">
+          <div className="bankroll-bar">
+            <div className="bankroll-stat">
+              <span className="bankroll-label">Cash:</span>
+              <span className="bankroll-amount">${cash.toLocaleString()}</span>
+            </div>
+            <div className="bankroll-stat">
+              <span className="bankroll-label">Bet / Roll:</span>
+              <span className="bankroll-bet">${BET_PER_ROLL.toLocaleString()}</span>
+            </div>
+            {cash < BET_PER_ROLL && !isSpinning && (
+              <button
+                type="button"
+                className="button-wonderland button-reset"
+                onClick={resetBankroll}
+              >
+                Reset (${STARTING_CASH.toLocaleString()})
+              </button>
+            )}
+          </div>
+
+          {netRollResult !== null && !isSpinning && (
+            <div className={`roll-outcome ${netRollResult >= 0 ? 'outcome-win' : 'outcome-loss'}`}>
+              Roll Win/Loss:{' '}
+              {netRollResult >= 0
+                ? `+$${netRollResult.toLocaleString()}`
+                : `-$${Math.abs(netRollResult).toLocaleString()}`}{' '}
+              (Points Won: +${lastPayout?.toLocaleString()} vs -${BET_PER_ROLL.toLocaleString()} bet)
+            </div>
+          )}
+
+          <div className="random-top-row">
             <span className="card-kicker">Down the Rabbit Hole</span>
             <button
+              type="button"
               className="button-wonderland"
               onClick={selectRandomWord}
-              disabled={words.length === 0}
+              disabled={words.length === 0 || isSpinning || cash < BET_PER_ROLL}
             >
-              <span className="hat-icon" aria-hidden="true">🎩</span>
-              Get random word
+              <span aria-hidden="true">🎩</span>
+              {isSpinning
+                ? 'Spinning...'
+                : cash < BET_PER_ROLL
+                  ? 'Not Enough Cash'
+                  : `Get random word ($${BET_PER_ROLL.toLocaleString()})`}
             </button>
           </div>
-          <div className="picked-word">{word || '—'}</div>
+
+          <div className={`slot-window ${isSpinning ? 'slot-spinning' : 'slot-landed'}`}>
+            <span className="slot-suit" aria-hidden="true">♦</span>
+            <div className="picked-word">{displayWord || word || '—'}</div>
+            <span className="slot-suit" aria-hidden="true">♣</span>
+          </div>
         </div>
       </section>
 
       <section className="storybook-card">
         <div className="card-inner">
-          <div className="card-heading">Curious about a word?</div>
-
-          <div className="input-container">
-            <input
-              className="word-input"
-              value={word}
-              onChange={handleValueChange}
-              placeholder="Type a word (e.g., curiouser, racecar, queue)"
-            />
-            <button className="button-wonderland button-compact" onClick={getStats}>
+          <div className="random-top-row">
+            <div className="card-heading">Word Rarity &amp; Meaning</div>
+            <button
+              type="button"
+              className="button-wonderland"
+              onClick={getStats}
+              disabled={!word.trim() || isSpinning}
+            >
               Define
             </button>
           </div>
@@ -309,7 +393,7 @@ function App() {
             <div className="summary-line">
               <span>{word.trim().length}-letter word</span>
               <span className="score-highlight">
-                Total Score: +{evaluation.totalPoints.toLocaleString()} pts
+                Total Score: +{evaluation.totalPoints.toLocaleString()} pts (${evaluation.totalPoints.toLocaleString()})
               </span>
             </div>
 
@@ -320,7 +404,7 @@ function App() {
                   return (
                     <li key={r.label} className="rule-item">
                       <span>
-                        • {r.label}: +{r.points.toLocaleString()} pts ({r.rarity}
+                        • {r.label}: +{r.points.toLocaleString()} pts (${r.points.toLocaleString()}) ({r.rarity}
                       </span>
                       <span className={`card-chip ${badge.tone}`} aria-hidden="true">
                         {badge.symbol}

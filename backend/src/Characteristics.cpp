@@ -1,7 +1,16 @@
 #include "../header/Characteristics.h"
+#include <cctype>
+
+static string toLowerStr(const string& s) {
+    string out = s;
+    for (char& c : out) {
+        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+    }
+    return out;
+}
 
 void Characteristics::calculateCounts() {
-    words = vector<string>();
+    words.clear();
     countPalindromes = 0;
     countNoRepeatedLetters = 0;
     countNoVowels = 0;
@@ -17,17 +26,21 @@ void Characteristics::calculateCounts() {
     countTripleConsecutiveLetters = 0;
     countContainsRarityWord = 0;
     countIsRarityWord = 0;
-    countLengths = vector<int>(50, 0);
+    countLengths.assign(50, 0);
 
     ifstream fin("words.txt");
     if (!fin.is_open()) {
-        cerr << "Error opening file for reading." << endl;
-        return; // Exit the function if the file can't be opened
+        cerr << "Error opening words.txt for reading." << endl;
+        return;
     }
 
-    string word;
-    while (fin >> word) {
+    string rawWord;
+    while (fin >> rawWord) {
+        string word = toLowerStr(rawWord);
+        if (word.empty()) continue;
+
         words.push_back(word);
+
         if (isPalindrome(word)) countPalindromes++;
         if (noRepeatedLetters(word)) countNoRepeatedLetters++;
         if (containsNoVowels(word)) countNoVowels++;
@@ -36,21 +49,29 @@ void Characteristics::calculateCounts() {
         if (alphabeticalOrder(word)) countAlphabeticalOrder++;
         if (reverseAlphabeticalOrder(word)) countReverseAlphabeticalOrder++;
         if (startEndSameLetter(word)) countStartEndSameLetter++;
-        if (calculateScrabbleScore(word) >= 20) countScrabbleScore20++;
-        if (calculateScrabbleScore(word) >= 30) countScrabbleScore30++;
-        if (calculateScrabbleScore(word) >= 40) countScrabbleScore40++;
-        if (consecutiveLetters(word) >= 2) countDoubleConsecutiveLetters++;
-        if (consecutiveLetters(word) >= 3) countTripleConsecutiveLetters++;
+
+        int scrabble = calculateScrabbleScore(word);
+        if (scrabble >= 20) countScrabbleScore20++;
+        if (scrabble >= 30) countScrabbleScore30++;
+        if (scrabble >= 40) countScrabbleScore40++;
+
+        int consec = consecutiveLetters(word);
+        if (consec >= 2) countDoubleConsecutiveLetters++;
+        if (consec >= 3) countTripleConsecutiveLetters++;
+
         if (containsRarityWord(word)) countContainsRarityWord++;
         if (isRarityWord(word)) countIsRarityWord++;
-        countLengths.at(word.length())++;
+
+        if (word.size() >= countLengths.size()) {
+            countLengths.resize(word.size() + 1, 0);
+        }
+        countLengths[word.size()]++;
     }
 
     fin.close();
 }
 
-void Characteristics::printCounts() {
-
+void Characteristics::printCounts() const {
     cout << endl << "--- Word Characteristics Summary ---" << endl;
     cout << "Total Words: " << words.size() << endl;
     cout << "Palindromes: " << countPalindromes << endl;
@@ -69,17 +90,23 @@ void Characteristics::printCounts() {
     cout << "Contains Rarity Word: " << countContainsRarityWord << endl;
     cout << "Is Rarity Word: " << countIsRarityWord << endl;
 
-    for (int i = 1; i < countLengths.size(); i++) {
-        cout << "Length of " << i << ": " << countLengths.at(i) << endl;
+    for (size_t i = 1; i < countLengths.size(); i++) {
+        if (countLengths[i] > 0) {
+            cout << "Length of " << i << ": " << countLengths[i] << endl;
+        }
     }
 }
 
-void Characteristics::addPoints(string rule, int frequency) {
-    double odds = (double)frequency / words.size();
-    int increment = 100 / odds;
-    cout << "   " << rule << ": +" << increment;
+void Characteristics::addPoints(const string& rule, int frequency) {
+    if (words.empty()) return;
+
+    int effectiveFreq = max(1, frequency);
+    double odds = static_cast<double>(effectiveFreq) / static_cast<double>(words.size());
+    int increment = static_cast<int>(100.0 / odds);
+
     score += increment;
-    
+    cout << "   " << rule << ": +" << increment;
+
     if (odds > 0.1) {
         cout << " (Common)";
     } else if (odds > 0.02) {
@@ -96,78 +123,89 @@ void Characteristics::addPoints(string rule, int frequency) {
     cout << endl;
 }
 
-void Characteristics::printScore(string word) {
-    score = 0;
+void Characteristics::printScore(const string& rawWord) {
+    string word = toLowerStr(rawWord);
+    if (word.empty()) return;
 
+    score = 0;
     cout << endl << "Word: " << word << endl;
 
-    if (isPalindrome(word))                 addPoints("Palindrome", countPalindromes);  // PALINDROME
-    if (noRepeatedLetters(word))            addPoints("No Repeated Letters", countNoRepeatedLetters);  // NO REPEATED LETTERS
-    if (containsNoVowels(word))             addPoints("Contains No Vowels", countNoVowels);  // CONTAINS NO VOWELS
-    if (containsNoConsonants(word))         addPoints("Contains No Consonants", countNoConsonants); // CONTAINS NO CONSONANTS
-    if (alternatingVowelsConsonants(word))  addPoints("Alternating Vowels and Consonants", countAlternatingVowelsConsonants);  // ALTERNATING BETWEEN VOWELS AND CONSONANTS
-    if (alphabeticalOrder(word))            addPoints("Alphabetical Order", countAlphabeticalOrder);  // ALPHABETICAL ORDER
-    if (reverseAlphabeticalOrder(word))     addPoints("Reverse Alphabetical Order", countReverseAlphabeticalOrder);  // REVERSE ALPHABETICAL ORDER
-    if (startEndSameLetter(word))           addPoints("Start and End with Same Letter", countStartEndSameLetter);  // START AND END WITH SAME LETTER
-    if (calculateScrabbleScore(word) >= 20) addPoints("Scrabble Score >= 20", countScrabbleScore20);  // SCRABBLE SCORE >= 20
-    if (calculateScrabbleScore(word) >= 30) addPoints("Scrabble Score >= 30", countScrabbleScore30);  // SCRABBLE SCORE >= 30
-    if (calculateScrabbleScore(word) >= 40) addPoints("Scrabble Score >= 40", countScrabbleScore40);  // SCRABBLE SCORE >= 40
-    if (consecutiveLetters(word) >= 2)      addPoints("Double Consecutive Letters", countDoubleConsecutiveLetters);  // DOUBLE CONSECUTIVE LETTERS
-    if (consecutiveLetters(word) >= 3)      addPoints("Triple Consecutive Letters", countTripleConsecutiveLetters);  // TRIPLE CONSECUTIVE LETTERS
-    if (containsRarityWord(word))           addPoints("Contains Rarity Word", countContainsRarityWord);  // CONTAINS RARITY WORD
-    if (isRarityWord(word))                 addPoints("Is Rarity Word", countIsRarityWord);  // IS RARITY WORD
-    addPoints("Length of " + to_string(word.length()), countLengths.at(word.length()));  // LENGTH OF WORD
+    if (isPalindrome(word))                 addPoints("Palindrome", countPalindromes);
+    if (noRepeatedLetters(word))            addPoints("No Repeated Letters", countNoRepeatedLetters);
+    if (containsNoVowels(word))             addPoints("Contains No Vowels", countNoVowels);
+    if (containsNoConsonants(word))         addPoints("Contains No Consonants", countNoConsonants);
+    if (alternatingVowelsConsonants(word))  addPoints("Alternating Vowels and Consonants", countAlternatingVowelsConsonants);
+    if (alphabeticalOrder(word))            addPoints("Alphabetical Order", countAlphabeticalOrder);
+    if (reverseAlphabeticalOrder(word))     addPoints("Reverse Alphabetical Order", countReverseAlphabeticalOrder);
+    if (startEndSameLetter(word))           addPoints("Start and End with Same Letter", countStartEndSameLetter);
+    if (calculateScrabbleScore(word) >= 20) addPoints("Scrabble Score >= 20", countScrabbleScore20);
+    if (calculateScrabbleScore(word) >= 30) addPoints("Scrabble Score >= 30", countScrabbleScore30);
+    if (calculateScrabbleScore(word) >= 40) addPoints("Scrabble Score >= 40", countScrabbleScore40);
+    if (consecutiveLetters(word) >= 2)      addPoints("Double Consecutive Letters", countDoubleConsecutiveLetters);
+    if (consecutiveLetters(word) >= 3)      addPoints("Triple Consecutive Letters", countTripleConsecutiveLetters);
+    if (containsRarityWord(word))           addPoints("Contains Rarity Word", countContainsRarityWord);
+    if (isRarityWord(word))                 addPoints("Is Rarity Word", countIsRarityWord);
+
+    int lenFreq = (word.size() < countLengths.size()) ? countLengths[word.size()] : 0;
+    addPoints("Length of " + to_string(word.size()), lenFreq);
 
     cout << "-> SCORE: " << score << endl;
 }
 
-string Characteristics::randomWord() {
+string Characteristics::randomWord() const {
     if (words.empty()) return "";
-    int randomIndex = rand() % words.size();
+    size_t randomIndex = static_cast<size_t>(rand()) % words.size();
     return words[randomIndex];
 }
 
-void Characteristics::createJSONFile() {
-    ofstream fout("file.json");
+void Characteristics::createJSONFile(const string& outputPath) const {
+    ofstream fout(outputPath);
+    if (!fout.is_open()) {
+        cerr << "Warning: Could not write JSON to " << outputPath << " (falling back to file.json)" << endl;
+        fout.open("file.json");
+        if (!fout.is_open()) {
+            cerr << "Error opening file.json for writing." << endl;
+            return;
+        }
+    }
 
-    fout << "{" << endl;
-    fout << "  \"words\": [\"" << words.at(0) << "\"";
-    for (int i = 1; i < words.size(); i++) {
-        fout << ", \"" << words.at(i) << "\"";
+    fout << "{\n";
+    fout << "  \"totalWords\": " << words.size() << ",\n";
+    fout << "  \"counts\": {\n";
+    fout << "    \"palindromes\": " << countPalindromes << ",\n";
+    fout << "    \"noRepeatedLetters\": " << countNoRepeatedLetters << ",\n";
+    fout << "    \"noVowels\": " << countNoVowels << ",\n";
+    fout << "    \"noConsonants\": " << countNoConsonants << ",\n";
+    fout << "    \"alternatingVowelsConsonants\": " << countAlternatingVowelsConsonants << ",\n";
+    fout << "    \"alphabeticalOrder\": " << countAlphabeticalOrder << ",\n";
+    fout << "    \"reverseAlphabeticalOrder\": " << countReverseAlphabeticalOrder << ",\n";
+    fout << "    \"startEndSameLetter\": " << countStartEndSameLetter << ",\n";
+    fout << "    \"scrabbleScore20\": " << countScrabbleScore20 << ",\n";
+    fout << "    \"scrabbleScore30\": " << countScrabbleScore30 << ",\n";
+    fout << "    \"scrabbleScore40\": " << countScrabbleScore40 << ",\n";
+    fout << "    \"doubleConsecutiveLetters\": " << countDoubleConsecutiveLetters << ",\n";
+    fout << "    \"tripleConsecutiveLetters\": " << countTripleConsecutiveLetters << ",\n";
+    fout << "    \"containsRarityWord\": " << countContainsRarityWord << ",\n";
+    fout << "    \"isRarityWord\": " << countIsRarityWord << ",\n";
+    fout << "    \"countLengths\": [";
+    for (size_t i = 0; i < countLengths.size(); i++) {
+        fout << countLengths[i];
+        if (i + 1 < countLengths.size()) fout << ", ";
     }
-    fout << "  ]," << endl << "  \"counts\": {" << endl;
-    fout << "    \"palindromes\": " << countPalindromes << "," << endl;
-    fout << "    \"noRepeatedLetters\": " << countNoRepeatedLetters << "," << endl;
-    fout << "    \"noVowels\": " << countNoVowels << "," << endl;
-    fout << "    \"noConsonants\": " << countNoConsonants << "," << endl;
-    fout << "    \"alternatingVowelsConsonants\": " << countAlternatingVowelsConsonants << "," << endl;
-    fout << "    \"alphabeticalOrder\": " << countAlphabeticalOrder << "," << endl;
-    fout << "    \"reverseAlphabeticalOrder\": " << countReverseAlphabeticalOrder << "," << endl;
-    fout << "    \"startEndSameLetter\": " << countStartEndSameLetter << "," << endl;
-    fout << "    \"scrabbleScore20\": " << countScrabbleScore20 << "," << endl;
-    fout << "    \"scrabbleScore30\": " << countScrabbleScore30 << "," << endl;
-    fout << "    \"scrabbleScore40\": " << countScrabbleScore40 << "," << endl;
-    fout << "    \"doubleConsecutiveLetters\": " << countDoubleConsecutiveLetters << "," << endl;
-    fout << "    \"tripleConsecutiveLetters\": " << countTripleConsecutiveLetters << "," << endl;
-    fout << "    \"containsRarityWord\": " << countContainsRarityWord << "," << endl;
-    fout << "    \"isRarityWord\": " << countIsRarityWord << "," << endl;
-    fout << "    \"countLengths\": [" << countLengths.at(0);
-    for (int i = 1; i < countLengths.size(); i++) {
-        fout << ", " << countLengths.at(i);
-    }
-    fout << "    ]" << endl;
-    fout << "  }" << endl;
-    fout << "}" << endl;
+    fout << "]\n";
+    fout << "  }\n";
+    fout << "}\n";
+    fout.close();
 }
 
 // PRIVATE FUNCTIONS
-bool Characteristics::isPalindrome(string word) {
-  string tempWord = word;
-  reverse(tempWord.begin(), tempWord.end());
-  return word == tempWord;
+bool Characteristics::isPalindrome(const string& word) const {
+    string tempWord = word;
+    reverse(tempWord.begin(), tempWord.end());
+    return word == tempWord;
 }
 
-bool Characteristics::noRepeatedLetters(string word) {
+bool Characteristics::noRepeatedLetters(const string& word) const {
     unordered_set<char> seen;
     for (char ch : word) {
         if (seen.count(ch)) return false;
@@ -176,134 +214,119 @@ bool Characteristics::noRepeatedLetters(string word) {
     return true;
 }
 
-bool Characteristics::containsNoVowels(string word) {
-    char vowels[] = {'a', 'e', 'i', 'o', 'u'};
-    for (unsigned int i = 0; i < 5; i++) {
-        if (contains(word, vowels[i])) {
-            return false;
-        } 
+bool Characteristics::containsNoVowels(const string& word) const {
+    const char vowels[] = {'a', 'e', 'i', 'o', 'u'};
+    for (char v : vowels) {
+        if (contains(word, v)) return false;
     }
     return true;
 }
 
-bool Characteristics::containsNoConsonants(string word) {
+bool Characteristics::containsNoConsonants(const string& word) const {
     for (char ch : word) {
-        bool isVowel = (ch=='a'||ch=='e'||ch=='i'||ch=='o'||ch=='u');
+        bool isVowel = (ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u');
         if (!isVowel) return false;
     }
-    return true;
+    return !word.empty();
 }
 
-bool Characteristics::alternatingVowelsConsonants(string word) {
+bool Characteristics::alternatingVowelsConsonants(const string& word) const {
     auto isVowel = [](char c) {
-        return (c=='a'||c=='e'||c=='i'||c=='o'||c=='u');
+        return (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u');
     };
-    int prevKind = -1; // -1 = none yet, 1 = vowel, 0 = consonant
-
+    int prevKind = -1;
     for (char ch : word) {
         int currKind = isVowel(ch) ? 1 : 0;
-        if (currKind == prevKind)
-            return false;
+        if (currKind == prevKind) return false;
         prevKind = currKind;
     }
     return (prevKind != -1);
 }
 
-bool Characteristics::alphabeticalOrder(string word) {
-    for (int i = 1; i < word.size(); ++i) {
-        char prev = word[i-1];
-        char curr = word[i];
-
-        if (curr < prev)
-            return false;
+bool Characteristics::alphabeticalOrder(const string& word) const {
+    for (size_t i = 1; i < word.size(); ++i) {
+        if (word[i] < word[i - 1]) return false;
     }
-    return true;
+    return !word.empty();
 }
 
-bool Characteristics::reverseAlphabeticalOrder(string word) {
-    for (int i = 1; i < word.size(); ++i) {
-        char prev = word[i-1];
-        char curr = word[i];
-
-        if (curr > prev)
-            return false;
+bool Characteristics::reverseAlphabeticalOrder(const string& word) const {
+    for (size_t i = 1; i < word.size(); ++i) {
+        if (word[i] > word[i - 1]) return false;
     }
-    return true;
+    return !word.empty();
 }
 
-bool Characteristics::startEndSameLetter(string word) {
-    return (word.front() == word.back());
+bool Characteristics::startEndSameLetter(const string& word) const {
+    if (word.empty()) return false;
+    return word.front() == word.back();
 }
 
-bool Characteristics::containsRarityWord(string word) {
-    string rarityWords[] = {"common", "uncommon", "rare", "epic", "legendary", "mythical"};
-    for (string rarityWord : rarityWords) {
+bool Characteristics::containsRarityWord(const string& word) const {
+    const string rarityWords[] = {"common", "uncommon", "rare", "epic", "legendary", "mythical"};
+    for (const string& rarityWord : rarityWords) {
         if (word.find(rarityWord) != string::npos) return true;
     }
     return false;
 }
 
-bool Characteristics::isRarityWord(string word) {
-    string rarityWords[] = {"common", "uncommon", "rare", "epic", "legendary", "mythical"};
-    for (string rarityWord : rarityWords) {
+bool Characteristics::isRarityWord(const string& word) const {
+    const string rarityWords[] = {"common", "uncommon", "rare", "epic", "legendary", "mythical"};
+    for (const string& rarityWord : rarityWords) {
         if (word == rarityWord) return true;
     }
     return false;
 }
 
-bool Characteristics::contains(string word, char letter) {
-    for (unsigned int i = 0; i < word.size(); i++) {
-        if (word.at(i) == letter) {
-            return true;
-        }
-    }
-    return false;
+bool Characteristics::contains(const string& word, char letter) const {
+    return word.find(letter) != string::npos;
 }
 
-int Characteristics::consecutiveLetters(string word) {
+int Characteristics::consecutiveLetters(const string& word) const {
+    if (word.empty()) return 0;
     int currentRun = 1;
     int maxRun = 1;
-
-    for (int i = 1; i < word.size(); ++i) {
-        if (word[i-1] == word[i]) {
+    for (size_t i = 1; i < word.size(); ++i) {
+        if (word[i - 1] == word[i]) {
             currentRun++;
             maxRun = max(currentRun, maxRun);
-        } else currentRun = 1;
+        } else {
+            currentRun = 1;
+        }
     }
     return maxRun;
 }
 
-int Characteristics::rareLetters(string word) {
-    auto isRare = [](char c) {
-        return (c=='q' || c=='x' || c=='z');
-    };
-
+int Characteristics::rareLetters(const string& word) const {
     int count = 0;
-    for (char ch : word) if (isRare(ch)) count++;
+    for (char ch : word) {
+        if (ch == 'q' || ch == 'x' || ch == 'z') count++;
+    }
     return count;
 }
 
-int Characteristics::calculateScrabbleScore(string word) {
-  int score = 0;
-
-  for (int i = 0; i < word.length(); i++) {
-    switch(word.at(i)) {
-      case 'a': case 'e': case 'i': case 'o': case 'u':
-      case 'l': case 'n': case 's': case 't': case 'r':
-        score += 1; break;
-      case 'd': case 'g':
-        score += 2; break;
-      case 'b': case 'c': case 'm': case 'p':
-        score += 3; break;
-      case 'f': case 'h': case 'v': case 'w': case 'y':
-        score += 4; break;
-      case 'k':
-        score += 5; break;
-      case 'j': case 'x':
-        score += 8; break;
-      case 'q': case 'z':
-        score += 10; break;
+int Characteristics::calculateScrabbleScore(const string& word) const {
+    int score = 0;
+    for (char ch : word) {
+        switch (ch) {
+            case 'a': case 'e': case 'i': case 'o': case 'u':
+            case 'l': case 'n': case 's': case 't': case 'r':
+                score += 1; break;
+            case 'd': case 'g':
+                score += 2; break;
+            case 'b': case 'c': case 'm': case 'p':
+                score += 3; break;
+            case 'f': case 'h': case 'v': case 'w': case 'y':
+                score += 4; break;
+            case 'k':
+                score += 5; break;
+            case 'j': case 'x':
+                score += 8; break;
+            case 'q': case 'z':
+                score += 10; break;
+            default:
+                break;
+        }
     }
-  }
-  return score;
+    return score;
 }

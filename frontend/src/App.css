@@ -1,53 +1,268 @@
-body {
-  padding: 25px 50px;
-  max-width: 800px;
-  margin: auto;
-  background-color: #2c2531;
-  color: white;
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-* {font-family: system-ui}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
 
-button {cursor: pointer}
+body {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  color: #f6efe2;
+  background-color: #131c22;
+  background-image:
+    linear-gradient(180deg, rgba(10, 16, 22, 0.45) 0%, rgba(10, 16, 22, 0.65) 100%),
+    url('./assets/background.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  padding: 36px 20px;
+}
 
-:focus {outline: none}
+#root {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+button {
+  font-family: 'Cinzel', Georgia, serif;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid #e5be59;
+  outline-offset: 2px;
+}
+
+.wonderland-shell {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.wonderland-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: rgba(247, 240, 222, 0.92);
+  border: 2px solid #c99d3b;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #231811;
+  text-align: center;
+}
+
+.suit-red {
+  color: #b8293d;
+}
+
+.suit-dark {
+  color: #1e1b24;
+}
+
+.storybook-card {
+  width: 100%;
+  border-radius: 18px;
+  padding: 5px;
+  background: linear-gradient(135deg, #e7c873 0%, #9b7024 50%, #e4c26b 100%);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.55);
+}
+
+.card-inner {
+  width: 100%;
+  border-radius: 14px;
+  padding: 20px 24px;
+  background: rgba(245, 239, 223, 0.92);
+  backdrop-filter: blur(6px);
+  color: #231811;
+  border: 1px solid rgba(130, 92, 32, 0.45);
+}
+
+.random-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.card-kicker {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5b4122;
+}
+
+.picked-word {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(110, 78, 28, 0.35);
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #2d1649;
+  min-height: 38px;
+}
+
+.card-heading {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 21px;
+  font-weight: 700;
+  color: #231811;
+  margin-bottom: 14px;
+}
 
 .input-container {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-.input-label {
-  font-size: 16px;
+  gap: 12px;
+  width: 100%;
 }
 
 .word-input {
-  flex-grow: 1;
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ffffff40;
-  background-color: transparent;
-  color: white;
-  border-radius: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f1510;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid #9b7632;
+  border-radius: 10px;
 }
 
-.button-primary {
-  padding: 10px 20px;
-  font-size: 16px;
-  font-weight: bold;
-  background-color: #8c38cd;
-  color: white;
-  border: none;
-  border-radius: 6px;
+.word-input::placeholder {
+  color: #77644e;
+  font-style: italic;
 }
 
-.section-container {
-  margin-bottom: 30px;
-  padding: 15px;
-  border: 1px solid #ffffff40;
-  border-radius: 12px;
+.button-wonderland {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 10px;
+  border: 2px solid #d9b559;
+  background: linear-gradient(180deg, #8b3fd1 0%, #581e8c 100%);
+  color: #fff8e8;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(36, 10, 61, 0.4);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.button-wonderland:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.button-wonderland:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.results-container {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(110, 78, 28, 0.28);
+  font-size: 20px;
+  line-height: 1.45;
+  color: #231811;
+}
+
+.summary-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.score-highlight {
+  color: #5a208e;
+}
+
+.rules-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.card-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin: 0 2px;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #fffdf7;
+  border: 1px solid rgba(35, 24, 17, 0.35);
+}
+
+.definition-box {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 253, 247, 0.85);
+  border: 1px solid rgba(110, 78, 28, 0.3);
+  font-size: 18px;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 20px 14px;
+  }
+
+  .card-inner {
+    padding: 16px;
+  }
+
+  .input-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .button-wonderland {
+    width: 100%;
+  }
 }

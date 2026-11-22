@@ -1,0 +1,21 @@
+{
+  "totalWords": 466550,
+  "counts": {
+    "palindromes": 412,
+    "noRepeatedLetters": 88101,
+    "noVowels": 3069,
+    "noConsonants": 75,
+    "alternatingVowelsConsonants": 30024,
+    "alphabeticalOrder": 2183,
+    "reverseAlphabeticalOrder": 1984,
+    "startEndSameLetter": 25053,
+    "scrabbleScore20": 102251,
+    "scrabbleScore30": 7703,
+    "scrabbleScore40": 362,
+    "doubleConsecutiveLetters": 110271,
+    "tripleConsecutiveLetters": 82,
+    "containsRarityWord": 380,
+    "isRarityWord": 6,
+    "countLengths": [0, 27, 637, 4711, 11171, 22951, 39518, 52093, 61019, 61754, 54321, 46411, 37523, 27924, 19258, 12148, 7115, 3982, 2003, 1053, 506, 238, 102, 49, 18, 7, 2, 3, 2, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
+  }
+}

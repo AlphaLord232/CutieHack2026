@@ -116,6 +116,23 @@ function getRarityLabel(odds: number) {
   return 'Mythical'
 }
 
+function getSuitBadge(rarity: string) {
+  switch (rarity) {
+    case 'Mythical':
+      return { symbol: '♠', tone: 'suit-dark' }
+    case 'Legendary':
+      return { symbol: '♥', tone: 'suit-red' }
+    case 'Epic':
+      return { symbol: '♦', tone: 'suit-red' }
+    case 'Rare':
+      return { symbol: '♣', tone: 'suit-dark' }
+    case 'Uncommon':
+      return { symbol: '♦', tone: 'suit-red' }
+    default:
+      return { symbol: '♣', tone: 'suit-dark' }
+  }
+}
+
 function App() {
   const [word, setWord] = useState('')
   const [words, setWords] = useState<string[]>([])
@@ -248,45 +265,82 @@ function App() {
   }, [word, stats])
 
   return (
-    <>
-      <div className="section-container">
-        <div className="random-word-label">Random Word ({statusMsg})</div>
-        <button className="button-primary" onClick={selectRandomWord} disabled={words.length === 0}>
-          Get random word
-        </button>
-        <div className="word-label">{word || '—'}</div>
-      </div>
+    <main className="wonderland-shell">
+      <header className="wonderland-banner">
+        <span className="suit-ornament suit-red" aria-hidden="true">♥</span>
+        <span className="banner-title">Wonderland Lexicon ({statusMsg})</span>
+        <span className="suit-ornament suit-dark" aria-hidden="true">♠</span>
+      </header>
 
-      <div className="section-container">
-        <div className="input-container">
-          <div className="input-label">Input a word...</div>
-          <input
-            className="word-input"
-            value={word}
-            onChange={handleValueChange}
-            placeholder="Type a word (e.g., racecar, queue, rhythm)"
-          />
-          <button className="button-primary" onClick={getStats}>
-            Define
-          </button>
+      <section className="storybook-card">
+        <div className="card-inner">
+          <div className="random-controls">
+            <span className="card-kicker">Down the Rabbit Hole</span>
+            <button
+              className="button-wonderland"
+              onClick={selectRandomWord}
+              disabled={words.length === 0}
+            >
+              <span className="hat-icon" aria-hidden="true">🎩</span>
+              Get random word
+            </button>
+          </div>
+          <div className="picked-word">{word || '—'}</div>
         </div>
+      </section>
 
-        <div className="results-container">
-          <div>{word.trim().length}-letter word</div>
-          <div>Total Score: +{evaluation.totalPoints.toLocaleString()} pts</div>
-          {evaluation.rules.length > 0 && (
-            <ul>
-              {evaluation.rules.map((r) => (
-                <li key={r.label}>
-                  {r.label}: +{r.points.toLocaleString()} pts ({r.rarity})
-                </li>
-              ))}
-            </ul>
-          )}
-          {dictInfo && <div style={{ marginTop: '8px' }}>Definition: {dictInfo}</div>}
+      <section className="storybook-card">
+        <div className="card-inner">
+          <div className="card-heading">Curious about a word?</div>
+
+          <div className="input-container">
+            <input
+              className="word-input"
+              value={word}
+              onChange={handleValueChange}
+              placeholder="Type a word (e.g., curiouser, racecar, queue)"
+            />
+            <button className="button-wonderland button-compact" onClick={getStats}>
+              Define
+            </button>
+          </div>
+
+          <div className="results-container">
+            <div className="summary-line">
+              <span>{word.trim().length}-letter word</span>
+              <span className="score-highlight">
+                Total Score: +{evaluation.totalPoints.toLocaleString()} pts
+              </span>
+            </div>
+
+            {evaluation.rules.length > 0 && (
+              <ul className="rules-list">
+                {evaluation.rules.map((r) => {
+                  const badge = getSuitBadge(r.rarity)
+                  return (
+                    <li key={r.label} className="rule-item">
+                      <span>
+                        • {r.label}: +{r.points.toLocaleString()} pts ({r.rarity}
+                      </span>
+                      <span className={`card-chip ${badge.tone}`} aria-hidden="true">
+                        {badge.symbol}
+                      </span>
+                      <span>)</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+
+            {dictInfo && (
+              <div className="definition-box">
+                <strong>Definition:</strong> {dictInfo}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </>
+      </section>
+    </main>
   )
 }
 

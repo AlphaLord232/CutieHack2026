@@ -1,7 +1,7 @@
 #include "../header/Characteristics.h"
 
 void Characteristics::calculateCounts() {
-    numWords = 0;
+    words = vector<string>();
     countPalindromes = 0;
     countNoRepeatedLetters = 0;
     countNoVowels = 0;
@@ -17,6 +17,7 @@ void Characteristics::calculateCounts() {
     countTripleConsecutiveLetters = 0;
     countContainsRarityWord = 0;
     countIsRarityWord = 0;
+    countLengths = vector<int>(50, 0);
 
     ifstream fin("words.txt");
     if (!fin.is_open()) {
@@ -26,7 +27,7 @@ void Characteristics::calculateCounts() {
 
     string word;
     while (fin >> word) {
-        numWords++;
+        words.push_back(word);
         if (isPalindrome(word)) countPalindromes++;
         if (noRepeatedLetters(word)) countNoRepeatedLetters++;
         if (containsNoVowels(word)) countNoVowels++;
@@ -42,6 +43,7 @@ void Characteristics::calculateCounts() {
         if (consecutiveLetters(word) >= 3) countTripleConsecutiveLetters++;
         if (containsRarityWord(word)) countContainsRarityWord++;
         if (isRarityWord(word)) countIsRarityWord++;
+        countLengths.at(word.length())++;
     }
 
     fin.close();
@@ -50,7 +52,7 @@ void Characteristics::calculateCounts() {
 void Characteristics::printCounts() {
 
     cout << endl << "--- Word Characteristics Summary ---" << endl;
-    cout << "Total Words: " << numWords << endl;
+    cout << "Total Words: " << words.size() << endl;
     cout << "Palindromes: " << countPalindromes << endl;
     cout << "No Repeated Letters: " << countNoRepeatedLetters << endl;
     cout << "No Vowels: " << countNoVowels << endl;
@@ -66,10 +68,14 @@ void Characteristics::printCounts() {
     cout << "Triple Consecutive Letters: " << countTripleConsecutiveLetters << endl;
     cout << "Contains Rarity Word: " << countContainsRarityWord << endl;
     cout << "Is Rarity Word: " << countIsRarityWord << endl;
+
+    for (int i = 1; i < countLengths.size(); i++) {
+        cout << "Length of " << i << ": " << countLengths.at(i) << endl;
+    }
 }
 
 void Characteristics::addPoints(string rule, int frequency) {
-    double odds = (double)frequency / numWords;
+    double odds = (double)frequency / words.size();
     int increment = 100 / odds;
     cout << "   " << rule << ": +" << increment;
     score += increment;
@@ -110,10 +116,51 @@ void Characteristics::printScore(string word) {
     if (consecutiveLetters(word) >= 3)      addPoints("Triple Consecutive Letters", countTripleConsecutiveLetters);  // TRIPLE CONSECUTIVE LETTERS
     if (containsRarityWord(word))           addPoints("Contains Rarity Word", countContainsRarityWord);  // CONTAINS RARITY WORD
     if (isRarityWord(word))                 addPoints("Is Rarity Word", countIsRarityWord);  // IS RARITY WORD
-    
+    addPoints("Length of " + to_string(word.length()), countLengths.at(word.length()));  // LENGTH OF WORD
+
     cout << "-> SCORE: " << score << endl;
 }
 
+string Characteristics::randomWord() {
+    if (words.empty()) return "";
+    int randomIndex = rand() % words.size();
+    return words[randomIndex];
+}
+
+void Characteristics::createJSONFile() {
+    ofstream fout("file.json");
+
+    fout << "{" << endl;
+    fout << "  \"words\": [\"" << words.at(0) << "\"";
+    for (int i = 1; i < words.size(); i++) {
+        fout << ", \"" << words.at(i) << "\"";
+    }
+    fout << "  ]," << endl << "  \"counts\": {" << endl;
+    fout << "    \"palindromes\": " << countPalindromes << "," << endl;
+    fout << "    \"noRepeatedLetters\": " << countNoRepeatedLetters << "," << endl;
+    fout << "    \"noVowels\": " << countNoVowels << "," << endl;
+    fout << "    \"noConsonants\": " << countNoConsonants << "," << endl;
+    fout << "    \"alternatingVowelsConsonants\": " << countAlternatingVowelsConsonants << "," << endl;
+    fout << "    \"alphabeticalOrder\": " << countAlphabeticalOrder << "," << endl;
+    fout << "    \"reverseAlphabeticalOrder\": " << countReverseAlphabeticalOrder << "," << endl;
+    fout << "    \"startEndSameLetter\": " << countStartEndSameLetter << "," << endl;
+    fout << "    \"scrabbleScore20\": " << countScrabbleScore20 << "," << endl;
+    fout << "    \"scrabbleScore30\": " << countScrabbleScore30 << "," << endl;
+    fout << "    \"scrabbleScore40\": " << countScrabbleScore40 << "," << endl;
+    fout << "    \"doubleConsecutiveLetters\": " << countDoubleConsecutiveLetters << "," << endl;
+    fout << "    \"tripleConsecutiveLetters\": " << countTripleConsecutiveLetters << "," << endl;
+    fout << "    \"containsRarityWord\": " << countContainsRarityWord << "," << endl;
+    fout << "    \"isRarityWord\": " << countIsRarityWord << "," << endl;
+    fout << "    \"countLengths\": [" << countLengths.at(0);
+    for (int i = 1; i < countLengths.size(); i++) {
+        fout << ", " << countLengths.at(i);
+    }
+    fout << "    ]" << endl;
+    fout << "  }" << endl;
+    fout << "}" << endl;
+}
+
+// PRIVATE FUNCTIONS
 bool Characteristics::isPalindrome(string word) {
   string tempWord = word;
   reverse(tempWord.begin(), tempWord.end());

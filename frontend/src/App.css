@@ -41,3 +41,13 @@ button {cursor: pointer}
   border: none;
   border-radius: 6px;
 }
+
+.section-container {
+  margin-bottom: 30px;
+  padding: 15px;
+  border: 1px solid #ffffff40;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

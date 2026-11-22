@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <algorithm>
 #include <fstream>
+#include <vector>
 using namespace std;
 
 class Characteristics {
@@ -14,8 +15,10 @@ class Characteristics {
     int wordLength;
     int syllables;
     int definitions;
+    string whitespace;
+    int emptySpaces;
     
-    int numWords;
+    vector<string> words;
     int countPalindromes;
     int countNoRepeatedLetters;
     int countNoVowels;
@@ -31,13 +34,8 @@ class Characteristics {
     int countTripleConsecutiveLetters;
     int countContainsRarityWord;
     int countIsRarityWord;
-    
-  public:
-    void calculateCounts();
-    void printCounts();
-    void printScore(string word);
-    void addPoints(string rule, int frequency);
-    
+    vector<int> countLengths;
+
     bool isPalindrome(string word);
     bool noRepeatedLetters(string word);
     bool containsNoVowels(string word);
@@ -54,6 +52,16 @@ class Characteristics {
 
     //helper functions
     bool contains(string word, char letter);
+    
+  public:
+    void calculateCounts();
+    void printCounts();
+    void printScore(string word);
+    void addPoints(string rule, int frequency);
+    string randomWord();
+    void createJSONFile();
+    
+    
 };
 
 #endif  // CHARACTERISTICS_H
